@@ -2,7 +2,9 @@
   "provider": "anthropic",
   "apiKeys": {
     "anthropic": "your-anthropic-api-key",
-    "openai": "your-openai-api-key"
+    "openai": "your-openai-api-key",
+    "openrouter": "your-openrouter-api-key"
   },
+  "model": "anthropic/claude-sonnet-4",
   "logLevel": "info"
 }

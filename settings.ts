@@ -1,11 +1,13 @@
-export type Provider = "anthropic" | "openai";
+export type Provider = "anthropic" | "openai" | "openrouter";
 export type LogLevel = "debug" | "info" | "warn" | "error";
 export interface Settings {
   provider: Provider;
   apiKeys: {
     anthropic: string;
     openai: string;
+    openrouter: string;
   };
+  model?: string; // Optional model override (useful for openrouter)
   logLevel: LogLevel;
 }
 

@@ -16,18 +16,20 @@ export async function chat(messages: Message[]): Promise<string> {
   log.debug({ provider: settings.provider, messageCount: messages.length }, "Sending chat request");
 
   if (settings.provider === "anthropic") {
-    return chatAnthropic(apiKey, messages);
+    return chatAnthropic(apiKey, messages, settings.model);
+  } else if (settings.provider === "openai") {
+    return chatOpenAI(apiKey, messages, settings.model);
   } else {
-    return chatOpenAI(apiKey, messages);
+    return chatOpenRouter(apiKey, messages, settings.model);
   }
 }
 
-async function chatAnthropic(apiKey: string, messages: Message[]): Promise<string> {
+async function chatAnthropic(apiKey: string, messages: Message[], model?: string): Promise<string> {
   const client = new Anthropic({ apiKey });
   const log = getLogger();
 
   const response = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: model ?? "claude-sonnet-4-20250514",
     max_tokens: 1024,
     messages: messages.map((m) => ({
       role: m.role,
@@ -43,12 +45,12 @@ async function chatAnthropic(apiKey: string, messages: Message[]): Promise<strin
   return text;
 }
 
-async function chatOpenAI(apiKey: string, messages: Message[]): Promise<string> {
+async function chatOpenAI(apiKey: string, messages: Message[], model?: string): Promise<string> {
   const client = new OpenAI({ apiKey });
   const log = getLogger();
 
   const response = await client.chat.completions.create({
-    model: "gpt-4o",
+    model: model ?? "gpt-4o",
     messages: messages.map((m) => ({
       role: m.role,
       content: m.content,
@@ -58,6 +60,28 @@ async function chatOpenAI(apiKey: string, messages: Message[]): Promise<string> 
   const text = response.choices[0]?.message?.content ?? "";
 
   log.debug({ tokens: response.usage }, "OpenAI response received");
+
+  return text;
+}
+
+async function chatOpenRouter(apiKey: string, messages: Message[], model?: string): Promise<string> {
+  const client = new OpenAI({
+    apiKey,
+    baseURL: "https://openrouter.ai/api/v1",
+  });
+  const log = getLogger();
+
+  const response = await client.chat.completions.create({
+    model: model ?? "anthropic/claude-sonnet-4",
+    messages: messages.map((m) => ({
+      role: m.role,
+      content: m.content,
+    })),
+  });
+
+  const text = response.choices[0]?.message?.content ?? "";
+
+  log.debug({ tokens: response.usage }, "OpenRouter response received");
 
   return text;
 }

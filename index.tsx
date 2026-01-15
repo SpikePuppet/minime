@@ -8,7 +8,7 @@ async function main() {
   const settings = await loadSettings();
   await initLogger();
 
-  render(<App userName={settings.userName} />);
+  render(<App userName={settings.userName} />, { fullscreen: true });
 }
 
 main();

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Box, useApp, useInput } from "ink";
+import { Box, useApp, useInput, useStdout } from "ink";
 import { Header } from "./Header";
 import { ChatBox } from "./ChatBox";
 import { InputBox } from "./InputBox";
@@ -14,6 +14,8 @@ export function App({ userName }: AppProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isThinking, setIsThinking] = useState(false);
   const { exit } = useApp();
+  const { stdout } = useStdout();
+  const height = stdout?.rows ?? 24;
 
   useInput((input, key) => {
     if (key.escape || (key.ctrl && input === "c")) {
@@ -47,7 +49,7 @@ export function App({ userName }: AppProps) {
   };
 
   return (
-    <Box flexDirection="column" borderStyle="double" borderColor="cyan" height={20}>
+    <Box flexDirection="column" borderStyle="double" borderColor="cyan" height={height}>
       <Header userName={userName} />
       <Box borderStyle="double" borderColor="cyan" borderTop={false} borderLeft={false} borderRight={false} />
       <ChatBox messages={messages} isThinking={isThinking} />

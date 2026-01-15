@@ -3,5 +3,6 @@
   "apiKeys": {
     "anthropic": "your-anthropic-api-key",
     "openai": "your-openai-api-key"
-  }
+  },
+  "logLevel": "info"
 }

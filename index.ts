@@ -1,17 +1,20 @@
 import { loadSettings, getApiKey } from "./settings";
+import { initLogger, getLogger } from "./logger";
 
 async function agentLoop() {
   const settings = await loadSettings();
-  console.log(`Current model provider: ${settings.provider}! 🚀`);
+  await initLogger();
+  const log = getLogger();
+
+  log.info({ provider: settings.provider }, "Agent starting");
 
   try {
     await getApiKey();
-    console.log("API key: configured");
+    log.debug("API key configured");
   } catch {
-    console.log("API key: not configured");
+    log.warn("API key not configured");
   }
 
-  console.log();
   const prompt = "> ";
   process.stdout.write(prompt);
 
@@ -19,9 +22,11 @@ async function agentLoop() {
     const input = line.trim();
 
     if (input === "exit" || input === "quit") {
-      console.log("Goodbye!");
+      log.info("Agent shutting down");
       break;
     }
+
+    log.debug({ input }, "User input received");
 
     // TODO: Send to LLM and get response
     console.log(`You said: ${input}`);

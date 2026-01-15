@@ -1,5 +1,6 @@
 import { loadSettings, getApiKey } from "./settings";
 import { initLogger, getLogger } from "./logger";
+import { chat, type Message } from "./llm";
 
 async function agentLoop() {
   const settings = await loadSettings();
@@ -15,6 +16,7 @@ async function agentLoop() {
     log.warn("API key not configured");
   }
 
+  const messages: Message[] = [];
   const prompt = "> ";
   process.stdout.write(prompt);
 
@@ -26,10 +28,24 @@ async function agentLoop() {
       break;
     }
 
+    if (!input) {
+      process.stdout.write(prompt);
+      continue;
+    }
+
     log.debug({ input }, "User input received");
 
-    // TODO: Send to LLM and get response
-    console.log(`You said: ${input}`);
+    messages.push({ role: "user", content: input });
+
+    try {
+      const response = await chat(messages);
+      messages.push({ role: "assistant", content: response });
+      console.log(`\n${response}\n`);
+    } catch (err) {
+      log.error({ err }, "Chat request failed");
+      console.log("\nError: Failed to get response\n");
+      messages.pop(); // Remove failed user message
+    }
 
     process.stdout.write(prompt);
   }

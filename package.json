@@ -1,6 +1,6 @@
 {
   "name": "minime",
-  "module": "index.ts",
+  "module": "index.tsx",
   "type": "module",
   "private": true,
   "devDependencies": {
@@ -11,7 +11,10 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
+    "ink": "^6.6.0",
+    "ink-text-input": "^6.0.0",
     "openai": "^6.16.0",
-    "pino": "^10.2.0"
+    "pino": "^10.2.0",
+    "react": "^19.2.3"
   }
 }

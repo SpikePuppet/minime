@@ -7,8 +7,9 @@ export interface Settings {
     openai: string;
     openrouter: string;
   };
-  model?: string; // Optional model override (useful for openrouter)
+  model?: string;
   logLevel: LogLevel;
+  userName: string;
 }
 
 const SETTINGS_PATH = "./settings.json";

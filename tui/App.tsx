@@ -23,10 +23,39 @@ export function App({ userName }: AppProps) {
     }
   });
 
+  const handleCommand = (cmd: string): boolean => {
+    const [command, ...args] = cmd.slice(1).split(" ");
+
+    switch (command) {
+      case "fill": {
+        const count = parseInt(args[0] ?? "30", 10);
+        const testMessages: Message[] = [];
+        for (let i = 1; i <= count; i++) {
+          testMessages.push({ role: "user", content: `Test message ${i}` });
+          testMessages.push({ role: "assistant", content: `Response to test message ${i}. This is some sample text to help test scrolling functionality.` });
+        }
+        setMessages(testMessages);
+        return true;
+      }
+      case "clear": {
+        setMessages([]);
+        return true;
+      }
+      default:
+        return false;
+    }
+  };
+
   const handleSubmit = async (input: string) => {
     if (input === "exit" || input === "quit") {
       exit();
       return;
+    }
+
+    // Handle ! commands
+    if (input.startsWith("!")) {
+      if (handleCommand(input)) return;
+      // Unknown command, treat as regular message
     }
 
     const newMessages: Message[] = [...messages, { role: "user", content: input }];
@@ -52,7 +81,7 @@ export function App({ userName }: AppProps) {
     <Box flexDirection="column" borderStyle="double" borderColor="cyan" height={height}>
       <Header userName={userName} />
       <Box borderStyle="double" borderColor="cyan" borderTop={false} borderLeft={false} borderRight={false} />
-      <ChatBox messages={messages} isThinking={isThinking} />
+      <ChatBox messages={messages} isThinking={isThinking} userName={userName} />
       <Box borderStyle="double" borderColor="cyan" borderBottom={false} borderLeft={false} borderRight={false} />
       <InputBox onSubmit={handleSubmit} disabled={isThinking} />
     </Box>

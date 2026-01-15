@@ -1,4 +1,17 @@
+import { loadSettings, getApiKey } from "./settings";
+
 async function agentLoop() {
+  const settings = await loadSettings();
+  console.log(`Provider: ${settings.provider}`);
+
+  try {
+    await getApiKey();
+    console.log("API key: configured");
+  } catch {
+    console.log("API key: not configured");
+  }
+
+  console.log();
   const prompt = "> ";
   process.stdout.write(prompt);
 

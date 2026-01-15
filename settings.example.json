@@ -7,5 +7,6 @@
   },
   "model": "anthropic/claude-sonnet-4",
   "logLevel": "info",
-  "userName": "Captain"
+  "userName": "Captain",
+  "mouseScrolling": true
 }

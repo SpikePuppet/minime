@@ -8,9 +8,10 @@ import { getLogger } from "../logger";
 
 interface AppProps {
   userName: string;
+  mouseScrolling: boolean;
 }
 
-export function App({ userName }: AppProps) {
+export function App({ userName, mouseScrolling }: AppProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isThinking, setIsThinking] = useState(false);
   const { exit } = useApp();
@@ -81,7 +82,7 @@ export function App({ userName }: AppProps) {
     <Box flexDirection="column" borderStyle="double" borderColor="cyan" height={height}>
       <Header userName={userName} />
       <Box borderStyle="double" borderColor="cyan" borderTop={false} borderLeft={false} borderRight={false} />
-      <ChatBox messages={messages} isThinking={isThinking} userName={userName} />
+      <ChatBox messages={messages} isThinking={isThinking} userName={userName} mouseScrolling={mouseScrolling} />
       <Box borderStyle="double" borderColor="cyan" borderBottom={false} borderLeft={false} borderRight={false} />
       <InputBox onSubmit={handleSubmit} disabled={isThinking} />
     </Box>

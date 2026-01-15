@@ -10,6 +10,7 @@ export interface Settings {
   model?: string;
   logLevel: LogLevel;
   userName: string;
+  mouseScrolling?: boolean;
 }
 
 const SETTINGS_PATH = "./settings.json";

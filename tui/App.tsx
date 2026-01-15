@@ -4,6 +4,7 @@ import { Header } from "./Header";
 import { ChatBox } from "./ChatBox";
 import { InputBox } from "./InputBox";
 import { CommandOverlay } from "./CommandOverlay";
+import { HistoryOverlay } from "./HistoryOverlay";
 import { chat, type Message } from "../llm";
 import { getLogger } from "../logger";
 
@@ -17,13 +18,14 @@ export function App({ userName, mouseScrolling, historySize }: AppProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isThinking, setIsThinking] = useState(false);
   const [showCommandOverlay, setShowCommandOverlay] = useState(false);
+  const [showHistoryOverlay, setShowHistoryOverlay] = useState(false);
   const [inputHistory, setInputHistory] = useState<string[]>([]);
   const { exit } = useApp();
   const { stdout } = useStdout();
   const height = stdout?.rows ?? 24;
 
   useInput((input, key) => {
-    if (showCommandOverlay) return; // Let overlay handle input
+    if (showCommandOverlay || showHistoryOverlay) return; // Let overlay handle input
 
     if (key.escape || (key.ctrl && input === "c")) {
       exit();
@@ -73,6 +75,10 @@ export function App({ userName, mouseScrolling, historySize }: AppProps) {
       setShowCommandOverlay(true);
       return;
     }
+    if (input === "#history") {
+      setShowHistoryOverlay(true);
+      return;
+    }
 
     // Handle ! commands (admin commands)
     if (input.startsWith("!")) {
@@ -109,6 +115,18 @@ export function App({ userName, mouseScrolling, historySize }: AppProps) {
         <CommandOverlay
           onSelect={handleOverlaySelect}
           onClose={() => setShowCommandOverlay(false)}
+        />
+      </Box>
+    );
+  }
+
+  if (showHistoryOverlay) {
+    return (
+      <Box flexDirection="column" justifyContent="center" alignItems="center" height={height}>
+        <HistoryOverlay
+          history={inputHistory}
+          onSelect={handleOverlaySelect}
+          onClose={() => setShowHistoryOverlay(false)}
         />
       </Box>
     );

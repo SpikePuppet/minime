@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Box, Text } from "ink";
 import TextInput from "ink-text-input";
 
@@ -12,6 +12,14 @@ interface InputBoxProps {
 
 export function InputBox({ onSubmit, disabled }: InputBoxProps) {
   const [value, setValue] = useState("");
+  const [arrowVisible, setArrowVisible] = useState(true);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setArrowVisible((v) => !v);
+    }, 500);
+    return () => clearInterval(timer);
+  }, []);
 
   const handleChange = (newValue: string) => {
     // Filter out mouse escape sequences
@@ -31,7 +39,7 @@ export function InputBox({ onSubmit, disabled }: InputBoxProps) {
 
   return (
     <Box paddingX={1}>
-      <Text color="cyan">&gt; </Text>
+      <Text color="cyan">{arrowVisible ? ">" : " "} </Text>
       <TextInput
         value={value}
         onChange={handleChange}

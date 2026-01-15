@@ -3,6 +3,7 @@ import { Box, useApp, useInput, useStdout } from "ink";
 import { Header } from "./Header";
 import { ChatBox } from "./ChatBox";
 import { InputBox } from "./InputBox";
+import { CommandOverlay } from "./CommandOverlay";
 import { chat, type Message } from "../llm";
 import { getLogger } from "../logger";
 
@@ -14,11 +15,14 @@ interface AppProps {
 export function App({ userName, mouseScrolling }: AppProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isThinking, setIsThinking] = useState(false);
+  const [showCommandOverlay, setShowCommandOverlay] = useState(false);
   const { exit } = useApp();
   const { stdout } = useStdout();
   const height = stdout?.rows ?? 24;
 
   useInput((input, key) => {
+    if (showCommandOverlay) return; // Let overlay handle input
+
     if (key.escape || (key.ctrl && input === "c")) {
       exit();
     }
@@ -53,7 +57,13 @@ export function App({ userName, mouseScrolling }: AppProps) {
       return;
     }
 
-    // Handle ! commands
+    // Handle # commands (UI commands)
+    if (input === "#commands") {
+      setShowCommandOverlay(true);
+      return;
+    }
+
+    // Handle ! commands (admin commands)
     if (input.startsWith("!")) {
       if (handleCommand(input)) return;
       // Unknown command, treat as regular message
@@ -77,6 +87,21 @@ export function App({ userName, mouseScrolling }: AppProps) {
       setIsThinking(false);
     }
   };
+
+  const handleOverlaySelect = (command: string) => {
+    handleSubmit(command);
+  };
+
+  if (showCommandOverlay) {
+    return (
+      <Box flexDirection="column" justifyContent="center" alignItems="center" height={height}>
+        <CommandOverlay
+          onSelect={handleOverlaySelect}
+          onClose={() => setShowCommandOverlay(false)}
+        />
+      </Box>
+    );
+  }
 
   return (
     <Box flexDirection="column" borderStyle="double" borderColor="cyan" height={height}>

@@ -2,7 +2,7 @@ import { loadSettings, getApiKey } from "./settings";
 
 async function agentLoop() {
   const settings = await loadSettings();
-  console.log(`Provider: ${settings.provider}`);
+  console.log(`Current model provider: ${settings.provider}! 🚀`);
 
   try {
     await getApiKey();

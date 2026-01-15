@@ -1,6 +1,7 @@
 import { loadSettings, getApiKey } from "./settings";
 import { initLogger, getLogger } from "./logger";
 import { chat, type Message } from "./llm";
+import { startSpinner, stopSpinner } from "./spinner";
 
 async function agentLoop() {
   const settings = await loadSettings();
@@ -38,12 +39,15 @@ async function agentLoop() {
     messages.push({ role: "user", content: input });
 
     try {
+      startSpinner("Thinking");
       const response = await chat(messages);
+      stopSpinner();
       messages.push({ role: "assistant", content: response });
-      console.log(`\n${response}\n`);
+      console.log(`${response}\n`);
     } catch (err) {
+      stopSpinner();
       log.error({ err }, "Chat request failed");
-      console.log("\nError: Failed to get response\n");
+      console.log("Error: Failed to get response\n");
       messages.pop(); // Remove failed user message
     }
 

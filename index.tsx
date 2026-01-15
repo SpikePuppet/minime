@@ -8,7 +8,7 @@ async function main() {
   const settings = await loadSettings();
   await initLogger();
 
-  render(<App userName={settings.userName} mouseScrolling={settings.mouseScrolling ?? false} />, { fullscreen: true });
+  render(<App userName={settings.userName} mouseScrolling={settings.mouseScrolling ?? false} historySize={settings.historySize ?? 10} />, { fullscreen: true });
 }
 
 main();

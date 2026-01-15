@@ -11,6 +11,7 @@ export interface Settings {
   logLevel: LogLevel;
   userName: string;
   mouseScrolling?: boolean;
+  historySize?: number;
 }
 
 const SETTINGS_PATH = "./settings.json";

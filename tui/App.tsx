@@ -10,12 +10,14 @@ import { getLogger } from "../logger";
 interface AppProps {
   userName: string;
   mouseScrolling: boolean;
+  historySize: number;
 }
 
-export function App({ userName, mouseScrolling }: AppProps) {
+export function App({ userName, mouseScrolling, historySize }: AppProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isThinking, setIsThinking] = useState(false);
   const [showCommandOverlay, setShowCommandOverlay] = useState(false);
+  const [inputHistory, setInputHistory] = useState<string[]>([]);
   const { exit } = useApp();
   const { stdout } = useStdout();
   const height = stdout?.rows ?? 24;
@@ -51,7 +53,16 @@ export function App({ userName, mouseScrolling }: AppProps) {
     }
   };
 
+  const addToHistory = (input: string) => {
+    setInputHistory((prev) => {
+      const newHistory = [input, ...prev.filter((h) => h !== input)];
+      return newHistory.slice(0, historySize);
+    });
+  };
+
   const handleSubmit = async (input: string) => {
+    addToHistory(input);
+
     if (input === "exit" || input === "quit") {
       exit();
       return;
@@ -109,7 +120,7 @@ export function App({ userName, mouseScrolling }: AppProps) {
       <Box borderStyle="double" borderColor="cyan" borderTop={false} borderLeft={false} borderRight={false} />
       <ChatBox messages={messages} isThinking={isThinking} userName={userName} mouseScrolling={mouseScrolling} />
       <Box borderStyle="double" borderColor="cyan" borderBottom={false} borderLeft={false} borderRight={false} />
-      <InputBox onSubmit={handleSubmit} disabled={isThinking} />
+      <InputBox onSubmit={handleSubmit} disabled={isThinking} history={inputHistory} />
     </Box>
   );
 }

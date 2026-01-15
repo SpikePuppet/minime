@@ -1,16 +1,20 @@
+export type Provider = "anthropic" | "openai";
+export type LogLevel = "debug" | "info" | "warn" | "error";
 export interface Settings {
-  provider: "anthropic" | "openai";
+  provider: Provider;
   apiKeys: {
     anthropic: string;
     openai: string;
   };
+  logLevel: LogLevel;
 }
 
 const SETTINGS_PATH = "./settings.json";
 
 export async function loadSettings(): Promise<Settings> {
   const file = Bun.file(SETTINGS_PATH);
-  return await file.json();
+  const settings = (await file.json()) as Settings;
+  return settings;
 }
 
 export async function getApiKey(): Promise<string> {

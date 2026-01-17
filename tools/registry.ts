@@ -3,6 +3,7 @@ import { grepTool } from "./grep";
 import { readTool } from "./read";
 import { writeTool } from "./write";
 import { editTool } from "./edit";
+import { listTool } from "./list";
 
 class ToolRegistry {
   private tools: Map<string, RegisteredTool> = new Map();
@@ -49,3 +50,4 @@ toolRegistry.register(grepTool);
 toolRegistry.register(readTool);
 toolRegistry.register(writeTool);
 toolRegistry.register(editTool);
+toolRegistry.register(listTool);

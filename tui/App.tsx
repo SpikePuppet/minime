@@ -5,7 +5,9 @@ import { ChatBox } from "./ChatBox";
 import { InputBox } from "./InputBox";
 import { CommandOverlay } from "./CommandOverlay";
 import { HistoryOverlay } from "./HistoryOverlay";
-import { chat, type Message } from "../llm";
+import { chatWithTools, type Message } from "../llm";
+import { toolRegistry } from "../tools/registry";
+import type { ExtendedMessage, ToolResult, MessageContent } from "../tools/types";
 import { getLogger } from "../logger";
 
 interface AppProps {
@@ -15,7 +17,8 @@ interface AppProps {
 }
 
 export function App({ userName, mouseScrolling, historySize }: AppProps) {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<ExtendedMessage[]>([]);
+  const [toolResults, setToolResults] = useState<Map<string, ToolResult>>(new Map());
   const [isThinking, setIsThinking] = useState(false);
   const [showCommandOverlay, setShowCommandOverlay] = useState(false);
   const [showHistoryOverlay, setShowHistoryOverlay] = useState(false);
@@ -38,7 +41,7 @@ export function App({ userName, mouseScrolling, historySize }: AppProps) {
     switch (command) {
       case "fill": {
         const count = parseInt(args[0] ?? "30", 10);
-        const testMessages: Message[] = [];
+        const testMessages: ExtendedMessage[] = [];
         for (let i = 1; i <= count; i++) {
           testMessages.push({ role: "user", content: `Test message ${i}` });
           testMessages.push({ role: "assistant", content: `Response to test message ${i}. This is some sample text to help test scrolling functionality.` });
@@ -48,6 +51,7 @@ export function App({ userName, mouseScrolling, historySize }: AppProps) {
       }
       case "clear": {
         setMessages([]);
+        setToolResults(new Map());
         return true;
       }
       default:
@@ -86,18 +90,58 @@ export function App({ userName, mouseScrolling, historySize }: AppProps) {
       // Unknown command, treat as regular message
     }
 
-    const newMessages: Message[] = [...messages, { role: "user", content: input }];
-    setMessages(newMessages);
+    let currentMessages: ExtendedMessage[] = [...messages, { role: "user", content: input }];
+    setMessages(currentMessages);
     setIsThinking(true);
 
+    const log = getLogger();
+
     try {
-      const response = await chat(newMessages);
-      setMessages([...newMessages, { role: "assistant", content: response }]);
+      let response = await chatWithTools(currentMessages, { enableTools: true });
+
+      // Loop while model wants to use tools (max 10 iterations)
+      let iterations = 0;
+      while (response.stopReason === "tool_use" && iterations++ < 10) {
+        log.debug({ iteration: iterations, toolCalls: response.toolCalls.length }, "Processing tool calls");
+
+        // Build assistant message with tool calls
+        const assistantContent: MessageContent[] = [];
+        if (response.content) {
+          assistantContent.push({ type: "text", text: response.content });
+        }
+        for (const tc of response.toolCalls) {
+          assistantContent.push({ type: "tool_use", toolCall: tc });
+        }
+        currentMessages = [...currentMessages, { role: "assistant", content: assistantContent }];
+
+        // Execute tools and collect results
+        const toolResultsContent: MessageContent[] = [];
+        const newToolResults = new Map(toolResults);
+
+        for (const tc of response.toolCalls) {
+          log.debug({ tool: tc.name, input: tc.input }, "Executing tool");
+          const result = await toolRegistry.execute(tc);
+          toolResultsContent.push({ type: "tool_result", toolResult: result });
+          newToolResults.set(tc.id, result);
+          log.debug({ tool: tc.name, isError: result.isError }, "Tool execution complete");
+        }
+
+        setToolResults(newToolResults);
+        currentMessages = [...currentMessages, { role: "user", content: toolResultsContent }];
+        setMessages(currentMessages);
+
+        // Get next response
+        response = await chatWithTools(currentMessages, { enableTools: true });
+      }
+
+      // Add final text response
+      if (response.content) {
+        setMessages([...currentMessages, { role: "assistant", content: response.content }]);
+      }
     } catch (err) {
-      const log = getLogger();
       log.error({ err }, "Chat request failed");
       setMessages([
-        ...newMessages,
+        ...currentMessages,
         { role: "assistant", content: "Error: Failed to get response" },
       ]);
     } finally {
@@ -136,7 +180,13 @@ export function App({ userName, mouseScrolling, historySize }: AppProps) {
     <Box flexDirection="column" borderStyle="double" borderColor="cyan" height={height}>
       <Header userName={userName} />
       <Box borderStyle="double" borderColor="cyan" borderTop={false} borderLeft={false} borderRight={false} />
-      <ChatBox messages={messages} isThinking={isThinking} userName={userName} mouseScrolling={mouseScrolling} />
+      <ChatBox
+        messages={messages}
+        isThinking={isThinking}
+        userName={userName}
+        mouseScrolling={mouseScrolling}
+        toolResults={toolResults}
+      />
       <Box borderStyle="double" borderColor="cyan" borderBottom={false} borderLeft={false} borderRight={false} />
       <InputBox onSubmit={handleSubmit} disabled={isThinking} history={inputHistory} />
     </Box>

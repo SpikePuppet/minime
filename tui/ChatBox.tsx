@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Box, Text, useInput, useStdout, useStdin } from "ink";
-import type { Message } from "../llm";
+import { ToolCallBlock } from "./ToolCallBlock";
+import type { ExtendedMessage, MessageContent, ToolResult } from "../tools/types";
 
 const thinkingFrames = ["🤔", "🧠", "💭", "✨", "💡", "🔮", "⚡", "🌟"];
 
@@ -9,13 +10,14 @@ const ENABLE_MOUSE = "\x1b[?1000h\x1b[?1006h"; // Enable mouse tracking (SGR mod
 const DISABLE_MOUSE = "\x1b[?1000l\x1b[?1006l"; // Disable mouse tracking
 
 interface ChatBoxProps {
-  messages: Message[];
+  messages: ExtendedMessage[];
   isThinking: boolean;
   userName: string;
   mouseScrolling: boolean;
+  toolResults?: Map<string, ToolResult>;
 }
 
-export function ChatBox({ messages, isThinking, userName, mouseScrolling }: ChatBoxProps) {
+export function ChatBox({ messages, isThinking, userName, mouseScrolling, toolResults }: ChatBoxProps) {
   const [frameIndex, setFrameIndex] = useState(0);
   const [scrollOffset, setScrollOffset] = useState(0);
   const { stdout } = useStdout();
@@ -87,6 +89,72 @@ export function ChatBox({ messages, isThinking, userName, mouseScrolling }: Chat
   const canScrollUp = scrollOffset > 0;
   const canScrollDown = scrollOffset + visibleHeight < messages.length;
 
+  const renderMessageContent = (msg: ExtendedMessage, msgIndex: number) => {
+    if (typeof msg.content === "string") {
+      // Simple string content
+      if (msg.role === "user") {
+        return (
+          <Text>
+            <Text color="cyan" bold>{userName}: </Text>
+            {msg.content}
+          </Text>
+        );
+      } else {
+        return (
+          <Text>
+            <Text color="green" bold>🤖 Assistant: </Text>
+            {msg.content}
+          </Text>
+        );
+      }
+    }
+
+    // Array content with potential tool calls
+    const elements: React.ReactNode[] = [];
+
+    for (let i = 0; i < msg.content.length; i++) {
+      const block = msg.content[i];
+      if (!block) continue;
+
+      if (block.type === "text") {
+        const textBlock = block;
+        if (msg.role === "user") {
+          elements.push(
+            <Box key={`${msgIndex}-text-${i}`}>
+              <Text>
+                <Text color="cyan" bold>{userName}: </Text>
+                {textBlock.text}
+              </Text>
+            </Box>
+          );
+        } else {
+          elements.push(
+            <Box key={`${msgIndex}-text-${i}`}>
+              <Text>
+                <Text color="green" bold>🤖 Assistant: </Text>
+                {textBlock.text}
+              </Text>
+            </Box>
+          );
+        }
+      } else if (block.type === "tool_use") {
+        const toolUseBlock = block;
+        const result = toolResults?.get(toolUseBlock.toolCall.id);
+        elements.push(
+          <Box key={`${msgIndex}-tool-${i}`}>
+            <ToolCallBlock
+              toolCall={toolUseBlock.toolCall}
+              result={result}
+            />
+          </Box>
+        );
+      }
+      // Skip tool_result blocks - they're shown via ToolCallBlock
+    }
+
+    return <>{elements}</>;
+  };
+
   return (
     <Box flexDirection="column" flexGrow={1} paddingX={1} overflow="hidden">
       {canScrollUp && (
@@ -94,17 +162,7 @@ export function ChatBox({ messages, isThinking, userName, mouseScrolling }: Chat
       )}
       {visibleMessages.map((msg, i) => (
         <Box key={scrollOffset + i} flexDirection="column" marginBottom={1}>
-          {msg.role === "user" ? (
-            <Text>
-              <Text color="cyan" bold>{userName}: </Text>
-              {msg.content}
-            </Text>
-          ) : (
-            <Text>
-              <Text color="green" bold>🤖 Assistant: </Text>
-              {msg.content}
-            </Text>
-          )}
+          {renderMessageContent(msg, scrollOffset + i)}
         </Box>
       ))}
       {isThinking && (

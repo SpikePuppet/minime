@@ -1,5 +1,6 @@
 import type { ToolDefinition, ToolCall, ToolResult, RegisteredTool } from "./types";
 import { grepTool } from "./grep";
+import { readTool } from "./read";
 
 class ToolRegistry {
   private tools: Map<string, RegisteredTool> = new Map();
@@ -43,3 +44,4 @@ class ToolRegistry {
 
 export const toolRegistry = new ToolRegistry();
 toolRegistry.register(grepTool);
+toolRegistry.register(readTool);

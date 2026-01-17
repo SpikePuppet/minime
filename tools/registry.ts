@@ -4,6 +4,7 @@ import { readTool } from "./read";
 import { writeTool } from "./write";
 import { editTool } from "./edit";
 import { listTool } from "./list";
+import { runTool } from "./run";
 
 class ToolRegistry {
   private tools: Map<string, RegisteredTool> = new Map();
@@ -51,3 +52,4 @@ toolRegistry.register(readTool);
 toolRegistry.register(writeTool);
 toolRegistry.register(editTool);
 toolRegistry.register(listTool);
+toolRegistry.register(runTool);
